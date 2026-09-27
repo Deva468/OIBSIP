@@ -42,7 +42,10 @@ Protected API routes
 Centralized error handling
 Environment variables for sensitive configuration
 Payment secrets stored only on the backend
+
 Project Structure
+
+
 pizza-delivery-system/
 │
 ├── backend/
@@ -90,6 +93,8 @@ pizza-delivery-system/
 │   └── project-output.png
 │
 └── README.md
+
+
 Getting Started
 Prerequisites
 
