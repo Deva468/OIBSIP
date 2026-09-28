@@ -8,8 +8,11 @@ import ApiResponse from "../utils/ApiResponse.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import logActivity from "../services/activity.service.js";
 
-const isDev =
-  process.env.NODE_ENV !== "production";
+// Demo OTP display is controlled separately.
+// Set DEMO_OTP=true in Render Environment Variables
+// for your college/OIBSIP demo deployment.
+const isDemoOtpEnabled =
+  process.env.DEMO_OTP === "true";
 
 const sendOrderOtp = asyncHandler(
   async (req, res) => {
@@ -36,12 +39,8 @@ const sendOrderOtp = asyncHandler(
         phone.trim()
       );
 
-    // There's no real SMS gateway wired up in this project, so the
-    // OTP is written to the server console exactly like a real
-    // provider's dashboard would show a delivery log. In development
-    // only, it's also echoed back in the API response so you can
-    // test the flow end-to-end without needing a paid SMS account -
-    // this must never happen in production.
+    // OTP is always printed in the backend console
+    // for debugging/demo purposes.
     console.log(
       `[OTP] ${phone} -> ${code} (expires in ${expiresInMinutes} min)`
     );
@@ -54,18 +53,22 @@ const sendOrderOtp = asyncHandler(
       req,
     });
 
+    const responseData = {
+      expiresInMinutes,
+    };
+
+    // IMPORTANT:
+    // Only return the OTP when DEMO_OTP=true.
+    // This allows the deployed demo to display the OTP
+    // without changing NODE_ENV from production.
+    if (isDemoOtpEnabled) {
+      responseData.devOtp = code;
+    }
+
     res.status(200).json(
       new ApiResponse(
         200,
-        {
-          expiresInMinutes,
-          // SECURITY: only ever present outside production. Real
-          // deployments must remove this and rely solely on the SMS
-          // provider actually delivering the code.
-          devOtp: isDev
-            ? code
-            : undefined,
-        },
+        responseData,
         "OTP sent successfully"
       )
     );
