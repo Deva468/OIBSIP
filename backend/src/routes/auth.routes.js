@@ -3,6 +3,7 @@ import express from "express";
 import {
   register,
   login,
+  googleLogin,
   getMe,
   forgotPassword,
   resetPassword,
@@ -15,6 +16,7 @@ import {
 
 import validateRequest from "../middleware/validateRequest.js";
 import authenticate from "../middleware/authenticate.js";
+import authRateLimiter from "../middleware/rateLimiter.js";
 
 const router = express.Router();
 
@@ -28,6 +30,12 @@ router.post(
   "/login",
   validateRequest(validateLogin),
   login
+);
+
+router.post(
+  "/google",
+  authRateLimiter,
+  googleLogin
 );
 
 router.get(

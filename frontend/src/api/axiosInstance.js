@@ -61,6 +61,9 @@ axiosInstance.interceptors.response.use(
       ) ||
       requestUrl.includes(
         "/auth/register"
+      ) ||
+      requestUrl.includes(
+        "/auth/google"
       );
 
     if (

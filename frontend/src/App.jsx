@@ -78,7 +78,7 @@ const AppShell = ({
   }, [location.pathname]);
 
   return (
-    <>
+    <div className="app-shell">
       {showNavigation && (
         <Navbar />
       )}
@@ -87,10 +87,8 @@ const AppShell = ({
         {children}
       </main>
 
-      {showNavigation && (
-        <Footer />
-      )}
-    </>
+      <Footer />
+    </div>
   );
 };
 

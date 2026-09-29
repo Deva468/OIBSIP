@@ -1,6 +1,7 @@
 import {
   registerUser,
   loginUser,
+  loginWithGoogle,
   getUserById,
   updateProfile,
   updateSettings,
@@ -80,6 +81,34 @@ const login = asyncHandler(
         200,
         result,
         "Login successful"
+      )
+    );
+  }
+);
+
+const googleLogin = asyncHandler(
+  async (req, res) => {
+    const result = await loginWithGoogle(
+      req.body?.credential
+    );
+
+    logActivity({
+      userId: result.user.id,
+      action: "login",
+      entityType: "User",
+      entityId: result.user.id?.toString?.() || "",
+      metadata: {
+        email: result.user.email,
+        provider: "google",
+      },
+      req,
+    });
+
+    res.status(200).json(
+      new ApiResponse(
+        200,
+        result,
+        "Google login successful"
       )
     );
   }
@@ -252,6 +281,7 @@ const resetPassword = asyncHandler(
 export {
   register,
   login,
+  googleLogin,
   getMe,
   updateUserProfile,
   updateUserSettings,

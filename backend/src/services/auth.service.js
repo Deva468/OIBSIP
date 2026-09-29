@@ -1,11 +1,15 @@
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
+import { OAuth2Client } from "google-auth-library";
 
 import User from "../models/User.js";
 import ApiError from "../utils/ApiError.js";
 import generateToken from "../utils/generateToken.js";
 import env from "../config/env.js";
 import { sendPasswordResetEmail } from "./email.service.js";
+
+const googleOAuthClient =
+  new OAuth2Client();
 
 const sanitizeUser = (user) => {
   return {
@@ -103,6 +107,116 @@ const loginUser = async ({
       401,
       "Invalid email or password"
     );
+  }
+
+  const token = generateToken(
+    user._id.toString(),
+    user.role
+  );
+
+  return {
+    user: sanitizeUser(user),
+    token,
+  };
+};
+
+const loginWithGoogle = async (credential) => {
+  if (!env.GOOGLE_CLIENT_ID) {
+    throw new ApiError(
+      503,
+      "Google sign-in is not configured on this server"
+    );
+  }
+
+  if (
+    typeof credential !== "string" ||
+    !credential
+  ) {
+    throw new ApiError(
+      400,
+      "A Google credential is required"
+    );
+  }
+
+  let googleUser;
+
+  try {
+    const ticket =
+      await googleOAuthClient.verifyIdToken({
+        idToken: credential,
+        audience: env.GOOGLE_CLIENT_ID,
+      });
+
+    googleUser = ticket.getPayload();
+  } catch {
+    throw new ApiError(
+      401,
+      "Google credential is invalid or expired"
+    );
+  }
+
+  if (
+    !googleUser?.sub ||
+    !googleUser.email ||
+    googleUser.email_verified !== true
+  ) {
+    throw new ApiError(
+      401,
+      "Google must provide a verified email address"
+    );
+  }
+
+  const normalizedEmail =
+    googleUser.email.trim().toLowerCase();
+
+  let user = await User.findOne({
+    email: normalizedEmail,
+  });
+
+  if (!user) {
+    try {
+      user = await User.create({
+        name:
+          String(googleUser.name || normalizedEmail)
+            .trim()
+            .slice(0, 50),
+        email: normalizedEmail,
+        password: await bcrypt.hash(
+          crypto.randomBytes(32).toString("hex"),
+          12
+        ),
+        role: "user",
+        isEmailVerified: true,
+        isActive: true,
+      });
+    } catch (error) {
+      if (error.code !== 11000) {
+        throw error;
+      }
+
+      user = await User.findOne({
+        email: normalizedEmail,
+      });
+    }
+  }
+
+  if (!user) {
+    throw new ApiError(
+      500,
+      "Unable to create or load the Google account"
+    );
+  }
+
+  if (!user.isActive) {
+    throw new ApiError(
+      403,
+      "Your account has been disabled"
+    );
+  }
+
+  if (!user.isEmailVerified) {
+    user.isEmailVerified = true;
+    await user.save();
   }
 
   const token = generateToken(
@@ -394,6 +508,7 @@ const resetPassword = async (rawToken, newPassword) => {
 export {
   registerUser,
   loginUser,
+  loginWithGoogle,
   getUserById,
   updateProfile,
   updateSettings,

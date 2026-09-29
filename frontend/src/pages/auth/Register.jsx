@@ -8,10 +8,14 @@ import {
 } from "react-router-dom";
 
 import axiosInstance from "../../api/axiosInstance.js";
+import GoogleSignInButton from "../../components/GoogleSignInButton.jsx";
+import { useAuth } from "../../context/AuthContext.jsx";
 
 const Register = () => {
   const navigate =
     useNavigate();
+
+  const { login } = useAuth();
 
   const [form, setForm] =
     useState({
@@ -31,6 +35,9 @@ const Register = () => {
   const [loading, setLoading] =
     useState(false);
 
+  const [googleLoading, setGoogleLoading] =
+    useState(false);
+
   const [error, setError] =
     useState("");
 
@@ -42,6 +49,38 @@ const Register = () => {
       ...current,
       [field]: value,
     }));
+  };
+
+  const signInWithGoogle = async (
+    credential
+  ) => {
+    try {
+      setGoogleLoading(true);
+      setError("");
+
+      const response =
+        await axiosInstance.post(
+          "/auth/google",
+          { credential }
+        );
+
+      const { user, token } =
+        response.data.data;
+
+      login(user, token);
+      navigate(
+        user.role === "admin"
+          ? "/admin"
+          : "/dashboard"
+      );
+    } catch (requestError) {
+      setError(
+        requestError.response?.data?.message ||
+          "Google sign-in failed. Please try again."
+      );
+    } finally {
+      setGoogleLoading(false);
+    }
   };
 
   const handlePhone =
@@ -338,6 +377,15 @@ const Register = () => {
             </button>
 
           </form>
+
+          <div className="auth-divider">
+            <span>or continue with</span>
+          </div>
+
+          <GoogleSignInButton
+            onCredential={signInWithGoogle}
+            disabled={googleLoading || loading}
+          />
 
           <p className="auth-switch">
             Already have an account?

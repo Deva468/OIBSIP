@@ -60,9 +60,18 @@ const Offers = () => {
   const [loading, setLoading] =
     useState(true);
 
+  const [error, setError] =
+    useState("");
+
+  const [retryCount, setRetryCount] =
+    useState(0);
+
   useEffect(() => {
     const fetchPizzas =
       async () => {
+        setLoading(true);
+        setError("");
+
         try {
           const response =
             await axiosInstance.get(
@@ -70,8 +79,14 @@ const Offers = () => {
             );
 
           setPizzas(
-            response.data.data.pizzas ||
+            response?.data?.data?.pizzas ||
               []
+          );
+        } catch (requestError) {
+          setError(
+            requestError.response?.data
+              ?.message ||
+              "Offers could not be loaded. Check your connection and try again."
           );
         } finally {
           setLoading(false);
@@ -79,7 +94,7 @@ const Offers = () => {
       };
 
     fetchPizzas();
-  }, []);
+  }, [retryCount]);
 
   const detail =
     offerDetails[
@@ -156,6 +171,25 @@ const Offers = () => {
 
   if (loading) {
     return <LoadingSpinner />;
+  }
+
+  if (error) {
+    return (
+      <div className="offers-page">
+        <div className="error-message" role="alert">
+          <span>{error}</span>
+          <button
+            type="button"
+            className="offers-retry-button"
+            onClick={() =>
+              setRetryCount((count) => count + 1)
+            }
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
