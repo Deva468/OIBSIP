@@ -185,6 +185,7 @@ const loginWithGoogle = async (credential) => {
           crypto.randomBytes(32).toString("hex"),
           12
         ),
+        role: "user",
         isEmailVerified: true,
         isActive: true,
       });
@@ -213,7 +214,19 @@ const loginWithGoogle = async (credential) => {
     );
   }
 
-  if (!user.isEmailVerified) {
+  const hasValidRole = [
+    "user",
+    "admin",
+  ].includes(user.role);
+
+  if (!hasValidRole) {
+    user.role = "user";
+  }
+
+  if (
+    !user.isEmailVerified ||
+    !hasValidRole
+  ) {
     user.isEmailVerified = true;
     await user.save();
   }

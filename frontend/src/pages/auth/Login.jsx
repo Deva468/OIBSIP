@@ -79,16 +79,23 @@ const Login = () => {
 
       const returnTo =
         searchParams.get("returnTo");
+      const isAdmin =
+        user.role === "admin";
+      const isAdminPath =
+        returnTo === "/admin" ||
+        returnTo?.startsWith("/admin/") ||
+        returnTo?.startsWith("/admin?");
       const isSafeReturnTo =
         returnTo &&
         returnTo.startsWith("/") &&
         !returnTo.startsWith("//") &&
-        !returnTo.startsWith("/login");
+        !returnTo.startsWith("/login") &&
+        (isAdmin || !isAdminPath);
 
       navigate(
         isSafeReturnTo
           ? returnTo
-          : user.role === "admin"
+          : isAdmin
             ? "/admin"
             : "/dashboard"
       );
