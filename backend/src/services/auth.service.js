@@ -185,7 +185,6 @@ const loginWithGoogle = async (credential) => {
           crypto.randomBytes(32).toString("hex"),
           12
         ),
-        role: "user",
         isEmailVerified: true,
         isActive: true,
       });
@@ -207,7 +206,7 @@ const loginWithGoogle = async (credential) => {
     );
   }
 
-  if (!user.isActive) {
+  if (user.isActive === false) {
     throw new ApiError(
       403,
       "Your account has been disabled"
