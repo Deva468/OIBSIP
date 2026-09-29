@@ -77,27 +77,10 @@ const Login = () => {
 
       login(user, token);
 
-      const returnTo =
-        searchParams.get("returnTo");
-      const isAdmin =
-        user.role === "admin";
-      const isAdminPath =
-        returnTo === "/admin" ||
-        returnTo?.startsWith("/admin/") ||
-        returnTo?.startsWith("/admin?");
-      const isSafeReturnTo =
-        returnTo &&
-        returnTo.startsWith("/") &&
-        !returnTo.startsWith("//") &&
-        !returnTo.startsWith("/login") &&
-        (isAdmin || !isAdminPath);
-
       navigate(
-        isSafeReturnTo
-          ? returnTo
-          : isAdmin
-            ? "/admin"
-            : "/dashboard"
+        user.role === "admin"
+          ? "/admin"
+          : "/dashboard"
       );
     } catch (requestError) {
       setError(

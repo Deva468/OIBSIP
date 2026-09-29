@@ -218,14 +218,22 @@ const loginWithGoogle = async (credential) => {
     "user",
     "admin",
   ].includes(user.role);
+  const needsActiveDefault =
+    user.isActive === undefined ||
+    user.isActive === null;
 
   if (!hasValidRole) {
     user.role = "user";
   }
 
+  if (needsActiveDefault) {
+    user.isActive = true;
+  }
+
   if (
     !user.isEmailVerified ||
-    !hasValidRole
+    !hasValidRole ||
+    needsActiveDefault
   ) {
     user.isEmailVerified = true;
     await user.save();
